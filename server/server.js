@@ -21,10 +21,18 @@ app.post('/todos', (req, res) => {
   var todo = new Todo(req.body);
 
   todo.save().then((doc) => {
-    console.log(doc);
     res.send(doc);
   }, (e) => {
-    console.log(e);
+    res.status(400).send(e.message);
+  });
+});
+
+app.get('/todos', (req, res) => {
+  Todo.find().then((todos) => {
+    res.send({
+      todos
+    });
+  }, (e) => {
     res.status(400).send(e.message);
   });
 });
@@ -32,3 +40,7 @@ app.post('/todos', (req, res) => {
 app.listen(3000, () => {
   console.log("Started on port 3000");
 })
+
+module.exports = {
+  app
+};
