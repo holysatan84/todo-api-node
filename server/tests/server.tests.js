@@ -124,5 +124,35 @@ describe('GET /todo/:id', () => {
       })
       .end(done());
   })
+});
 
-})
+describe('DELETE /todos/:id', () => {
+  it('Should delete the Id if a valid id is passed', (done) => {
+    var hexId = new ObjectID().toHexString();
+    request(app)
+      .delete(`/todos/${hexId}`)
+      .expect(404)
+      .end(done);
+  });
+
+  it('Should send a 404 if an invalid Id is passes', (done) => {
+    request(app)
+      .delete('/todos/123sad')
+      .expect(404)
+      .end(done);
+  });
+
+  it('Should send a 404 if a valid id is passed which is not present', (
+    done) => {
+
+    request(app)
+      .delete(`/todos/${todos[0]._id.toHexString()}`)
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.todo.text).toBe(todos[0].text);
+      })
+      .end(done);
+
+  });
+
+});
