@@ -1,5 +1,8 @@
 const expect = require('expect');
 const request = require('supertest');
+const {
+  ObjectID
+} = require('mongodb');
 
 var {
   app
@@ -15,10 +18,13 @@ var {
 
 
 const todos = [{
+  _id: new ObjectID(),
   text: 'Test data 1'
 }, {
+  _id: new ObjectID(),
   text: 'Text data 2'
 }, {
+  _id: new ObjectID(),
   text: 'Text Data 3'
 }]
 
@@ -28,7 +34,7 @@ beforeEach((done) => {
   }).then(() => done());
 });
 
-describe('Post Todos', () => {
+describe('POST /todos', () => {
 
   it('should create a new todo', (done) => {
     var text = 'Test text request';
@@ -77,7 +83,7 @@ describe('Post Todos', () => {
 
 });
 
-describe('Get Todo Tests', () => {
+describe('GET /todo', () => {
   it('should return all the todo notes', (done) => {
     request(app)
       .get('/todos')
@@ -88,4 +94,35 @@ describe('Get Todo Tests', () => {
       })
       .end(done);
   });
+
 });
+
+describe('GET /todo/:id', () => {
+  it('Should return a 404 in case of an invalid id', (done) => {
+
+    request(app)
+      .get(`/todos/123abc`)
+      .expect(404)
+      .end(done);
+  });
+
+  it('should return a 404 in case of an id which is valid but not found', (
+    done) => {
+    var hexId = new ObjectID().toHexString();
+    request(app)
+      .get(`/todos/${hexId}`)
+      .expect(404)
+      .end(done);
+  });
+
+  it('Should return the doc if a valid id that exists is passed', (done) => {
+    request(app)
+      .get(`/todos/${todos[0]._id.toHexString()}`)
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.todos).toBe(todos[0]);
+      })
+      .end(done());
+  })
+
+})
