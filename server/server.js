@@ -1,3 +1,5 @@
+require('./config/config.js');
+
 const _ = require('lodash');
 const {
   ObjectID
@@ -6,7 +8,7 @@ const {
 const express = require('express');
 const bodyParser = require('body-parser');
 
-var port = process.env.PORT || 3000;
+var port = process.env.PORT;
 
 var {
   mongoose
