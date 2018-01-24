@@ -1,38 +1,50 @@
-require('./config/config.js');
+require('./config/config');
 
 const _ = require('lodash');
+const express = require('express');
+const bodyParser = require('body-parser');
 const {
   ObjectID
 } = require('mongodb');
 
-const express = require('express');
-const bodyParser = require('body-parser');
-
-var port = process.env.PORT;
-
 var {
   mongoose
 } = require('./db/mongoose');
-
 var {
   Todo
 } = require('./models/todo');
-
 var {
   User
 } = require('./models/user');
 
+var {
+  authenticate
+} = require('./middleware/authenticate');
+
 var app = express();
+const port = process.env.PORT;
 
 app.use(bodyParser.json());
 
 app.post('/todos', (req, res) => {
-  var todo = new Todo(req.body);
+  var todo = new Todo({
+    text: req.body.text
+  });
 
   todo.save().then((doc) => {
     res.send(doc);
   }, (e) => {
-    res.status(400).send(e.message);
+    res.status(400).send(e);
+  });
+});
+
+app.get('/todos', (req, res) => {
+  Todo.find().then((todos) => {
+    res.send({
+      todos
+    });
+  }, (e) => {
+    res.status(400).send(e);
   });
 });
 
@@ -45,31 +57,16 @@ app.get('/todos/:id', (req, res) => {
 
   Todo.findById(id).then((todo) => {
     if (!todo) {
-      return res.status(404).send('No Todo found');
+      return res.status(404).send();
     }
+
     res.send({
       todo
     });
-
-  }), (e) => {
-    res.status(400).send(e.message);
-  };
-});
-
-
-app.get('/todos', (req, res) => {
-  Todo.find().then((todos) => {
-    res.send({
-      todos
-    });
-  }, (e) => {
-    res.status(400).send(e.message);
+  }).catch((e) => {
+    res.status(400).send();
   });
 });
-
-app.listen(port, () => {
-  console.log(`Started on port ${port}`);
-})
 
 app.delete('/todos/:id', (req, res) => {
   var id = req.params.id;
@@ -82,13 +79,13 @@ app.delete('/todos/:id', (req, res) => {
     if (!todo) {
       return res.status(404).send();
     }
+
     res.send({
       todo
     });
   }).catch((e) => {
     res.status(400).send();
   });
-
 });
 
 app.patch('/todos/:id', (req, res) => {
@@ -112,12 +109,15 @@ app.patch('/todos/:id', (req, res) => {
     new: true
   }).then((todo) => {
     if (!todo) {
-      return res.status(400).send();
+      return res.status(404).send();
     }
-    return user
+
+    res.send({
+      todo
+    });
   }).catch((e) => {
-    return res.status(400).send();
-  });
+    res.status(400).send();
+  })
 });
 
 // POST /users
@@ -136,11 +136,23 @@ app.post('/users', (req, res) => {
 
 app.get('/users', (req, res) => {
   User.find().then((users) => {
-    res.send(users)
-  }).catch((e) => {
-    res.status(400).send(e.message);
+    res.send({
+      users
+    });
+  }, (e) => {
+    res.status(400).send(e);
   });
+});
+
+
+
+app.get('/users/me', authenticate, (req, res) => {
+  res.send(req.user);
 })
+
+app.listen(port, () => {
+  console.log(`Started up at port ${port}`);
+});
 
 module.exports = {
   app
